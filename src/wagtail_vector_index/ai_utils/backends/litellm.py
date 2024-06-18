@@ -157,14 +157,21 @@ class LiteLLMEmbeddingBackend(BaseEmbeddingBackend[LiteLLMEmbeddingBackendConfig
     config_cls = LiteLLMEmbeddingBackendConfig
 
     def embed(self, inputs: Iterable[str], **kwargs) -> Iterator[list[float]]:
-        response = litellm.embedding(model=self.config.model_id, input=inputs, **kwargs)
+        parameters = {**self.config.default_parameters, **kwargs}
+        response = litellm.embedding(
+            model=self.config.model_id,
+            input=inputs,
+            **parameters,
+        )
         # LiteLLM *should* return an EmbeddingResponse
         assert isinstance(response, litellm.EmbeddingResponse)
         yield from [data["embedding"] for data in response["data"]]
 
     async def aembed(self, inputs: Iterable[str], **kwargs) -> list[float]:
+        parameters = {**self.config.default_parameters, **kwargs}
         response = await litellm.aembedding(
-            model=self.config.model_id, inputs=inputs, **kwargs
+            model=self.config.model_id,
+            inputs=inputs,
+            **parameters
         )
-
         return [data["embedding"] for data in response["data"]]
